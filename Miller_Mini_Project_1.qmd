@@ -31,7 +31,7 @@ dorian <- gutenberg_download(174, mirror = "http://mirror.csclub.uwaterloo.ca/gu
 ```
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
-#putting books into one word per line format
+#putting books into one word per row format
 
 dorian_words <- dorian |>
   mutate(linenumber = row_number()) |>
@@ -44,13 +44,11 @@ earnest_words <- earnest |>
 ```
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
-#Loading in other datasets for analysis: Stop wrods and Sentiment analysis (bing and afinn)
+#Loading in other data sets for analysis: Stop words and Sentiment analysis (afinn)
 
 smart_stopwords <- get_stopwords(source = "smart")
 
 afinn <-get_sentiments(lexicon = "afinn")
-
-bing_sentiments <- get_sentiments(lexicon = "bing")
 
 
 ```
@@ -65,7 +63,7 @@ To give a bit of context, this is a brief summary of both works. "The Picture of
 
 # Word Frequency and Theme
 
-The differences in these two works, in style, medium, and theme, can be seen by examining the most common words used in each work. The graph below shows the top 21 words used in each work, with words listed in descending order of proportion of all words each word makes up in the given work. Comparing proportions as opposed to absolute counts allows us to compare the works against each other, despite "The Picture of Dorian Gray" being almost four times longer than "The Importance of Being Earnest". Stop words, words that are extremely common with broad purposes such as "the" and "a", are excluded as defined by the smart stop words lexicon.
+The differences in these two works, in style, medium, and theme, can be seen by examining the most common words used in each work. The graph below shows the top 15 words used in each work, with words listed in descending order of proportion of all words each word makes up in the given work. Comparing proportions as opposed to absolute counts allows us to compare the works against each other, despite "The Picture of Dorian Gray" being almost four times longer than "The Importance of Being Earnest". Stop words, words that are extremely common with broad purposes such as "the" and "a", are excluded as defined by the smart stop words lexicon.
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
 #Calculating how often each word is used as a proportion of total words
@@ -94,7 +92,7 @@ books_freq <- earnest_words_freq |>
 ```
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
-#Bar plots of top 20 words in each book with and without stop words
+#Bar plots of top 15 words in each book with and without stop words
 
 
 
@@ -109,20 +107,20 @@ books_characters <- c("dorian", "henry", "gray", "harry", "basil", "jack", "alge
 name_colors <- c("Name" = "thistle4", "Not a Name" = "thistle")
 
 
-#Bar plot, top 20 words in each work: 
+#Bar plot, top 15 words in each work: 
 
 books_freq |>
   anti_join(smart_stopwords) |> #Exclude stop words
   filter(word != "NA") |>
   mutate(is_name = ifelse(word %in% books_characters, "Name", "Not a Name")) |>
   group_by(book) |>
-  slice_max(freq, n = 15) |> #Get top 20 words
+  slice_max(freq, n = 15) |> #Get top 15 words
   ggplot(aes(x = fct_reorder(word, freq), y = freq, fill = is_name)) +
     geom_col() +
     coord_flip() +
     facet_wrap(vars(book), scales = "free_y") +
     theme_light() +
-    labs(title = "Top 20 Words in Each Work", 
+    labs(title = "Top 15 Words in Each Work", 
        x = "Word", 
        y = "Frequency of Word", 
        fill = "Is the word a name?") +
@@ -136,7 +134,7 @@ In this graph, differences in the structure of each text are pronounced. In the 
 To more accurately compare how themes are reflected in the most frequent words, we shall now look at the same graph, but with names excluded:
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
-#Bar plots of top 20 words in each book with and without stop words or names
+#Bar plots of top 15 words in each book with and without stop words or names
 
 
 
@@ -146,7 +144,7 @@ books_colors <- c("The Picture of Dorian Gray" = "tomato3", "The Importance of B
 
 
 
-#Bar plot of Top 20 Words in each work, w/out names: 
+#Bar plot of Top 15 Words in each work, w/out names: 
 
 books_freq |>
   anti_join(smart_stopwords) |>
@@ -160,7 +158,7 @@ books_freq |>
     geom_col(aes(x = fct_reorder(word, freq), y = freq, fill = book)) +
     coord_flip() +
     theme_light() +
-    labs(title = "Top 20 Words in Each Work (Excluding Names)", 
+    labs(title = "Top 15 Words in Each Work (Excluding Names)", 
        x = "word", 
        y = "Frequency of Word") +
     scale_fill_manual(values = books_colors)+
@@ -173,7 +171,7 @@ In "The Importance of Being Earnest", we can see that despite removing names, th
 However, despite these novels' differences, we do see strong overlap in the top words, with "don't", "life", "good", "man", "time", "people" and "back" making it onto both lists. Both of these novels were written by Wilde, so we cannot discern if this is reflective of a wider trend in English texts, or if these are unique frequencies to Wilde's writing. We can, however, explore a difference in themes by directly comparing words associated with each text's major themes.
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
-#Bar chart of difference in freqency of theme words: 
+#Bar chart of difference in frequency of theme words: 
 
 
 
