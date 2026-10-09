@@ -1,0 +1,139 @@
+---
+title: "Mini_Project_1"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+Loading in books ---------------------------------------------------------------
+
+```{r}
+earnest <- gutenberg_download(844, mirror = "http://mirror.csclub.uwaterloo.ca/gutenberg/")
+
+dorian <- gutenberg_download(174, mirror = "http://mirror.csclub.uwaterloo.ca/gutenberg/")
+
+```
+
+
+Introduce books: Plot, Themes, Genre: ------------------------------------------
+
+
+
+
+Difference in themes: Word Frequency: ------------------------------------------
+
+Table: Most Frequent words (excluding stop words, character names)
+Table: Dorain Themes (age/aging/aged, death/dying/dead, ???)
+Table: Earnest Themes (marriage/marry/married, bunbury/bunburied/bunburry, name/named/naming)
+Graph: Comparing most unusal words?
+
+
+
+
+Sentiment over time ------------------------------------------------------------
+Dark themes reflected in sentiment of story overtime: 
+
+
+```{r}
+dorian_words <- dorian |>
+  mutate(linenumber = row_number()) |>
+  unnest_tokens(word, text) 
+
+
+dorian_words |>
+  inner_join(bing_sentiments) |>
+  count(index = linenumber %/% 80, sentiment) |>
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) |>
+  mutate(sentiment = positive - negative) |>
+  ggplot(aes(x = index, y = sentiment)) +
+    geom_col(show.legend = FALSE) +
+    geom_smooth(se= F)
+```
+Guide for annotations: https://ggplot2.tidyverse.org/reference/annotate.html
+
+
+
+Side note: Direct comparison does not work with earnest. 
+
+```{r}
+earnest_words <- earnest |>
+  mutate(linenumber = row_number()) |>
+  unnest_tokens(word, text) 
+
+earnest_words |>
+  inner_join(bing_sentiments) |>
+  count(index = linenumber %/% 20, sentiment) |>
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) |>
+  mutate(sentiment = positive - negative) |>
+  ggplot(aes(x = index, y = sentiment)) +
+    geom_col(show.legend = FALSE) +
+    geom_smooth(se= F) +
+  annotate("segment", x = 70, xend = 70, y = -10, yend = 10,
+  colour = "red", linewidth = 1) +
+  annotate("text", x = 100, y = 7.5, label = "Algernon and Cecily meet")
+```
+
+Less clear arc, and sentiment analysis does not work as well with such a sarcastic and witty work. For example, patch of negative lines at index 75, when algeron and cecily are joking about being "wicked". Part of the joke is how un-wicked, but perfectly friendly, light hearted, and flirtatious the scene is. 
+
+
+
+
+
+
+Vocabulary by character---------------------------------------------------------
+```{r}
+earnest_book <- str_flatten(earnest$text, " ")
+
+lines <- str_split_1(earnest_book, "(?=(JACK\\.|ALGERNON\\.|CHASUBLE\\.|MERRIMAN\\.|LANE\\.|LADY BRACKNELL\\.|GWENDOLEN\\.| GWENDOLEN\\.|MISS PRISM\\.))" )
+
+name_line <- as_tibble(lines) |>
+  mutate(character = str_extract(value, "JACK\\.|ALGERNON\\.|CHASUBLE\\.|MERRIMAN\\.|LANE\\.|LADY BRACKNELL\\.|GWENDOLEN\\.| GWENDOLEN\\.|MISS PRISM\\."), 
+         line = str_remove(value, "JACK\\.|ALGERNON\\.|CHASUBLE\\.|MERRIMAN\\.|LANE\\.|LADY BRACKNELL\\.|GWENDOLEN\\.| GWENDOLEN\\.|MISS PRISM\\.")) |>
+  select(character, line) |>
+  filter(!is.na(character))
+
+
+#I dont think I need this but just in case: 
+
+#earnest |>
+#  filter(text == "JACK." | text == "ALGERNON." | text ==  "CHASUBLE." | text == "MERRIMAN." | text == "LANE." | #text == "LADY BRACKNELL" | text == "GWENDOLEN." | text == "GWENDOLEN." |text ==  "MISS PRISM.") |>
+#  group_by(text) |>
+#  summarize(count = n())
+
+#character_names_upper <- c("JACK.", "ALGERNON.", "CHASUBLE.", "MERRIMAN.", "LANE.", "LADY BRACKNELL", "GWENDOLEN.", "GWENDOLEN.", "MISS PRISM.")
+
+#earnest |>
+#  mutate(char_name = str_detect(text, "[A-Z]{4} ?[A-Z]*\\.+")) |>
+#  print(n=100)
+```
+  
+Help with split: https://stackoverflow.com/questions/74292177/split-a-string-and-keep-delimiter 
+  
+  
+  
+  
+  
+Some Conclusion? ---------------------------------------------------------------
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
