@@ -1,139 +1,356 @@
 ---
-title: "Mini_Project_1"
-format: html
+title: "*The Importance of Being Earnest* and *The Picture of Dorian Gray*: How Text Analysis Reflects Difference in Theme, Structure, and Genre"
+author: Lydia Miller
+format: pdf
+fig-width: 12
 editor: visual
 editor_options: 
   chunk_output_type: console
 ---
 
-Loading in books ---------------------------------------------------------------
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+#Loading in Packages: 
 
-```{r}
+library(tidyverse)
+library(tidytext)
+library(textdata)
+library(wordcloud)
+library(wordcloud2)
+library(viridis)
+library(ggthemes)
+library(gutenbergr)
+```
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+#Getting books from Project Gutenberg: 
+
 earnest <- gutenberg_download(844, mirror = "http://mirror.csclub.uwaterloo.ca/gutenberg/")
 
 dorian <- gutenberg_download(174, mirror = "http://mirror.csclub.uwaterloo.ca/gutenberg/")
 
 ```
 
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+#putting books into one word per line format
 
-Introduce books: Plot, Themes, Genre: ------------------------------------------
-
-
-
-
-Difference in themes: Word Frequency: ------------------------------------------
-
-Table: Most Frequent words (excluding stop words, character names)
-Table: Dorain Themes (age/aging/aged, death/dying/dead, ???)
-Table: Earnest Themes (marriage/marry/married, bunbury/bunburied/bunburry, name/named/naming)
-Graph: Comparing most unusal words?
-
-
-
-
-Sentiment over time ------------------------------------------------------------
-Dark themes reflected in sentiment of story overtime: 
-
-
-```{r}
 dorian_words <- dorian |>
   mutate(linenumber = row_number()) |>
   unnest_tokens(word, text) 
 
-
-dorian_words |>
-  inner_join(bing_sentiments) |>
-  count(index = linenumber %/% 80, sentiment) |>
-  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) |>
-  mutate(sentiment = positive - negative) |>
-  ggplot(aes(x = index, y = sentiment)) +
-    geom_col(show.legend = FALSE) +
-    geom_smooth(se= F)
-```
-Guide for annotations: https://ggplot2.tidyverse.org/reference/annotate.html
-
-
-
-Side note: Direct comparison does not work with earnest. 
-
-```{r}
 earnest_words <- earnest |>
   mutate(linenumber = row_number()) |>
   unnest_tokens(word, text) 
 
-earnest_words |>
-  inner_join(bing_sentiments) |>
-  count(index = linenumber %/% 20, sentiment) |>
-  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) |>
-  mutate(sentiment = positive - negative) |>
-  ggplot(aes(x = index, y = sentiment)) +
-    geom_col(show.legend = FALSE) +
-    geom_smooth(se= F) +
-  annotate("segment", x = 70, xend = 70, y = -10, yend = 10,
-  colour = "red", linewidth = 1) +
-  annotate("text", x = 100, y = 7.5, label = "Algernon and Cecily meet")
 ```
 
-Less clear arc, and sentiment analysis does not work as well with such a sarcastic and witty work. For example, patch of negative lines at index 75, when algeron and cecily are joking about being "wicked". Part of the joke is how un-wicked, but perfectly friendly, light hearted, and flirtatious the scene is. 
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+#Loading in other datasets for analysis: Stop wrods and Sentiment analysis (bing and afinn)
+
+smart_stopwords <- get_stopwords(source = "smart")
+
+afinn <-get_sentiments(lexicon = "afinn")
+
+bing_sentiments <- get_sentiments(lexicon = "bing")
+
+
+```
+
+# Introduction
+
+"The Picture of Dorian Gray" and "The Importance of Being Earnest" are both brilliant peices of literature. "The Picture of Dorian Gray" is a dark examination of beauty, youth, influence, and morality as it plays on a Faustian bargian, while "The Importance of Being Earnest" is a comedic play, saterizing morality and marriage with unmatched whit. The most suprising connection between these works that span genere and theme is authorship. Oscar Wilde wrote both of these works in DATE and DATE respectively. With the control of a shared author, in this analysis we will explore how analyzing the freqeuncy and sentiment of text can shed light on the differces between these works.
+
+First is a breif summary of both works. "The Picture of Dorian Gray" focuses on its titular character Dorian Gray, a beautiful but naive young man, Basil NAME, a dedicated painter, and Lord Henry, a hedonistic wit. The novel begins with Basil giving Dorian a portrait of himself and Lord Henry musing on the fragility of beauty and youth. This frightens Dorian who then wishes that instead of growing old himself, his portrait would grow old instead, exclaiming "I would give my sould for that!" (Chapter 2). The course of the novel then follows Dorain as he, incresingly influenced by Lord Henry and falling out with Basil, goes around society and builds a reckless reputation. Dorain gets engaged to the young actress Sybil, then abrubtly breaks off the engagement after acting detriorates. Dorain is harsh to her, and when he returns home he realizes his cruetly is reflecting in the portrait that has develped a sneer. This cements for dorain that his wish has come true, his portrait takes his ugliness. Dorian wishes to make up with Sybil, but Lord Henry tells him Sybil has killed herself. The story then jumps ahead 18 years, where Dorain has accrued a cruel reputation but maintains social standings due to his persistent beauty and youth. Basil comes to check on Dorian, and Dorian reveals what has become of Basil's masterpiece in the course of 18 years. The painting is horrific, marred with all the age and cruelty of Dorians past. Basil is horrified, and Dorian proceeds to kill Basil. Dorian faces an increasingly difficult life tormented by guilt and people he has wronged. In a fit of rage, he stabs the painting, but his servents instead find Dorian dead finally as an old man and the painting reverted to its original youthful Dorian.
+
+"The Importance of Being Earnest" FINISH THIS
+
+# Word Frequency and Theme
+
+The differences in these two works, in style, meduium, and theme, can be seen by examining the most common words used in each work. The graph below shows the top 21 words used in each work, with words listed in decending order of proportion of all words each word makes up in the given work. Comparing proportions as opposed to absolute counts allows us to compare the works against eachother, despite "The Picture of Dorian Gray" being almost four times longer than "The Importance of Being Earnest". Stop words, words that are extreemely common with broad purposes such as "the" and "a", are excluded as defined by the smart stop wrods lexicon.
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+#Calculating how often each word is used as a proportion of total words
+
+earnest_words_freq <- earnest_words |>
+  group_by(word) |>
+  summarize(num_word_earnest = n()) |>
+  mutate(freq_word_earnest = num_word_earnest / sum(num_word_earnest))
+
+dorian_words_freq <- dorian_words |>
+  group_by(word) |>
+  summarize(num_word_dorian = n()) |>
+  mutate(freq_word_dorian = num_word_dorian / sum(num_word_dorian))
+
+#Put both books into one tibble
+
+books_freq <- earnest_words_freq |>
+  full_join(dorian_words_freq) |>
+  select( -num_word_earnest, -num_word_dorian) |>
+  pivot_longer(cols = c(freq_word_earnest, freq_word_dorian), names_to = "book", values_to = "freq") |>
+  mutate(book = str_remove(book, "freq_word_"), 
+         book = ifelse(book == "dorian", "The Picture of Dorian Gray", 
+                       "The Importance of Being Earnest"))
+
+
+```
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+#Bar plots of top 20 words in each book with and without stop words
 
 
 
+#Vector of lowercase character names
+
+books_characters <- c("dorian", "henry", "gray", "harry", "basil", "jack", "algernon", "cecily", "gwendolen", "lady", "bracknell", "prism", "ernest", "chasuble", "worthing", "lane", "bunbury", "merriman", "miss", "cardew")
 
 
 
-Vocabulary by character---------------------------------------------------------
-```{r}
+#Vector to manually choose colors
+
+name_colors <- c("Name" = "thistle4", "Not a Name" = "thistle")
+
+
+#Bar plot, top 20 words in each work: 
+
+books_freq |>
+  anti_join(smart_stopwords) |> #Exclude stop words
+  filter(word != "NA") |>
+  mutate(is_name = ifelse(word %in% books_characters, "Name", "Not a Name")) |>
+  group_by(book) |>
+  slice_max(freq, n = 15) |> #Get top 20 words
+  ggplot(aes(x = fct_reorder(word, freq), y = freq, fill = is_name)) +
+    geom_col() +
+    coord_flip() +
+    facet_wrap(vars(book), scales = "free_y") +
+    theme_light() +
+    labs(title = "Top 20 Words in Each Work", 
+       x = "Word", 
+       y = "Frequency of Word", 
+       fill = "Is the word a name?") +
+    scale_fill_manual(values = name_colors) +
+    scale_y_continuous(labels = scales::percent)
+
+```
+
+In this graph, differences in the structure of each text are pronounced. In the script for a play, a characters name is fully printed before every line of dialouge and in stage directions. In short, character names are used constantly. As a result, the top 4 words in "The Importance of Being Earnest" are all character names as refered to in stage directions. The theme of names in general may also contribute to 11 out of the top 15 words being names, including the name Ernest that does not refer to an actualy character. Although "Dorian" is still the top word for "The Picture of Dorain Gray", ultimately only 5 names make the top 15 list. In contrast to "The Importance of Being Earnests" many characters and importance on names, "The Picutre of Dorian Gray" has a clear protagonist and is more insular, we only deeply investigate the life of DOrian Gray and his closest friends, and as a result have far less names with far less frequence.
+
+To more accurately compare how themes are reflected in the most frequent words, we shall now look at the same graph, but with names excluded:
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+#Bar plots of top 20 words in each book with and without stop words or names
+
+
+
+#Vector to manually choose colors: 
+
+books_colors <- c("The Picture of Dorian Gray" = "tomato3", "The Importance of Being Earnest" = "lightblue3")
+
+
+
+#Bar plot of Top 20 Words in each work, w/out names: 
+
+books_freq |>
+  anti_join(smart_stopwords) |>
+  filter(word != "NA") |>
+  mutate(is_name = ifelse(word %in% books_characters, "Name", "Not a Name")) |>
+  filter(is_name == "Not a Name") |>
+  group_by(book) |>
+  slice_max(freq, n = 15) |>
+  ggplot() +
+    facet_wrap(vars(book), scales = "free_y") +
+    geom_col(aes(x = fct_reorder(word, freq), y = freq, fill = book)) +
+    coord_flip() +
+    theme_light() +
+    labs(title = "Top 20 Words in Each Work (Excluding Names)", 
+       x = "word", 
+       y = "Frequency of Word") +
+    scale_fill_manual(values = books_colors)+
+    guides(fill = "none") +
+    scale_y_continuous(labels = scales::percent)
+```
+
+In "The Importance of Being Earnest", we can see that despite removing names, there is still a decided focus on people. The words "mr", "brother", "aunt", and "sir" reflects the plays focus on relationships and class, as these titles reveal how characters know and address each other. In "The Picture of Dorian Gray" we can see the focus on the portrait itself. Some top words include "time", "eyes", and "face", all of which a wrapped in Dorians examination of his changing portrait, as he reflects on the passage of time and the cruel twisting of his physical features. The Gothic edge of this novel also comes through, in words such as "lord", "love", and "night".
+
+However, despite these novels differences we do see strong overlap in the top words, wih "don't", "life", "good", "man", "time", "people" and "back" making it onto both lists. Both of these novels were ritten by Wilde, so we cannot dicern if this is reflective of a wider trend in English texts, or if these are unique freqencies to Wildes writing. We can however explore a difference in themes by directly comparing words associated with each texts major themes.
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+#Bar chart of difference in freqency of theme words: 
+
+
+
+#Vector to manually choose colors
+
+books_colors <- c("The Picture of Dorian Gray" = "tomato3", "The Importance of Being Earnest" = "lightblue3")
+
+
+
+#Plot word frequency for themes
+
+books_freq |>
+  mutate(theme = ifelse(word %in% c("love", "loves", "loved"), 
+                        "Both", 
+                    ifelse(word %in% c("name", "named", "names", "marry", "married", "marriage"), 
+                           "Earnest Themes", 
+                          ifelse(word %in% c("beauty", "beautiful", "youth", "young"), 
+                                 "Dorian Themes", 
+                                    "no")))) |>
+  filter(theme != "no") |>
+  mutate(theme = as_factor(theme)) |>
+  ggplot(aes(x = word, 
+             y = freq, 
+             fill = book)) +
+  geom_col(position = "dodge") +
+  facet_wrap(~factor(theme, c("Dorian Themes", "Earnest Themes", "Both")), 
+             scale = "free_x") +
+  theme_light() +
+  scale_fill_manual(values = books_colors) +
+  scale_y_continuous(labels = scales::percent)
+
+
+
+```
+
+For this graph, I have focused on the themes of beauty and youth for "The Picture of Dorian Gray", marriage and names for "The importance of Being Earnest", and "love" as a theme in both works. We can see that, in general, when the word is associated with a certain work that work features the word more often. Once exception is in the word "young", which features more in "The Importance of Being Earnest" than in "The Picture of Dorian Gray". This discrepency represents subtler points of theme in both works. "The Picture of Dorian Gray" often refers to youth, as a possesive feature Dorain holds, as opposed to the adjective "young". Youth is often personified, as the novel grapples with the implications of youth even aside from a character being young (as the second half of the novel deals with a late 30 year old Dorian, who despite not being young still holds youth). For example, when Lord Henry describes Dorian for the first time he thinks "All the candour of youth was there, as well as all youth’s passionate purity." "The Importance of Being Earnest" often plays on Victorian societal expectations for people, which vary according to age. As a result, characters being called "young" is often done to contextualize the rules taht apply to characters and to add emphasize to their actions. For example, Jack asks in Scence SMTH "Why cucumber sandwiches? Why such reckless extravagance in one so young?", which plays on the strictness and expectations placed upon people even in topics as trivial as snacks.
+
+# Sentiment and Story Arc
+
+"The Picture of Dorain Gray" is a fascinating character study, as we watch Dorian go from a relative newcommer on social scenes, rise to it with new experiences, slowly fall as Dorian becomes increasingly careless, and ultimately escalate to a miserable life for Dorian as he cuts out friedns and faces consequences of past mistakes. We see this character charm the world, fall out of favor with it, and ultimately crumble after a challenging life. Each of these turns is descirbed in beautiful prose, following all of Dorians feeling's of love, pleasure, guilt, and fear. As a result, sentiment analyis of each word in the novel provides an insightful miror into the events of the novel itself. The following graphic was created by giving each word a sentiment value as assinged by the "Afinn" lexicon, where each word is rated on a scale from -5 to 5, with -5 being the most negative words and 5 being the most postive. The novel is then divided into sections of 80 lines each, and the sum of the Afinn value of each word is calculated. The annotations were made as I tried to independently think of the most important plot developements in the novel, and then went back into the text and left markers on the graph for their place.
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+#Show sentiment change over course of story with plot point annotations
+
+dorian_words |>
+  inner_join(afinn) |>
+  mutate(paragraph = linenumber %/% 80 ) |>
+  group_by(paragraph) |>
+  summarize(sum_value = sum(value)) |>
+  
+  ggplot(aes(x = paragraph, y = sum_value)) +
+    geom_col(show.legend = FALSE, fill = "tomato3") +
+    geom_smooth(se= F, color = "black") + 
+  
+    annotate("segment", x = 11, y = -65, yend = 80, linewidth = 1, color = "black", alpha = .2) + 
+    annotate("text", x = 11, y =60 , label = "Dorian Offers Soul")+
+    annotate("segment", x = 28, y = -65, yend = 80, linewidth = 1, color = "black", alpha = .2) +  
+    annotate("text", x = 28, y = 70 , label = "Dorian Engaged")+
+    annotate("segment", x = 42, y = -65, yend = 80, linewidth = 1, color = "black", alpha = .2) +  
+    annotate("text", x = 50, y = 60 , label = "Dorian breaks engagement")+
+    annotate("text", x = 50.5, y = 53, label = "and portrait changes")+
+    annotate("segment", x = 71, y = -65, yend = 80, linewidth = 1, color = "black", alpha = .2) + 
+    annotate("text", x = 71, y = -55 , label = "Dorian kills Basil")+
+    annotate("segment", x = 105, y = -65, yend = 80, linewidth = 1, color = "black", alpha = .2) + 
+    annotate("text", x = 105, y = -55 , label = "Dorian dies")+
+  
+    labs(title = "The Picture of Dorian Gray", 
+       x = "Section of Novel (each section 80 lines)", 
+       y = "Sum of Section's Afinn Value") +
+    theme_light()
+
+
+
+# Guide for annotations: https://ggplot2.tidyverse.org/reference/annotate.html
+
+```
+
+The emotion of words used very well represents the overall arc of the story, as the smoother shows the rise and subsequent increasing unhappiness of Dorian Gray. The specific events of the novel also match very well to the summed affin values, we see a section of high sentiment around Dorian's engagement, where he poetically professes his love for Sybil Vane and speaks highly of herself and abilities. We conversely see a patch of negative sentiment over the scene where Dorian shows Basil what has become of the painting, sees Basil's horror, and ultimately kills Basil.
+
+We can create a similar plot for "The Importance of Being Earnest":
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+#Sentiment over time
+
+earnest_words |>
+  inner_join(afinn) |>
+  filter(word != "miss") |>
+  mutate(paragraph = linenumber %/% 80 ) |>
+  group_by(paragraph) |>
+  summarize(sum_value = sum(value)) |>
+  
+  ggplot(aes(x = paragraph, y = sum_value)) +
+    geom_col(show.legend = FALSE, fill = "lightblue3") +
+    geom_smooth(se= F, color = "black")+
+  labs(title = "The Importance of Being Earnest", 
+       x = "Section of Play (each section 80 lines)", 
+       y = "Sum of Section's Afinn Value")+
+  theme_light()
+
+```
+
+This graph accurately shows the generally positive sentiment through out the play, the play has tension and motions, but is generally funny and realtively light hearted. However, the arc of the novel is less clear.
+
+Both novel have beautiful arcs, filled with building tensions, suprising twists, expertly crafted climaxes and amazing conclusions. And yet the arc is far better represented in the graph for "The Picture of Dorian Gray" as opposed to "The Importance of Being Earnest". There are several resons for this. A primary reason is the difference in how langauge is used in each novel. "The Picutre of Dorian Gray" is full of prose that highlights the emotions of scences, and while artiistc is also honest about characters percieved emotions. In contrast, "The Importance of Being Earnest" is sarcastic and witty, with characters often saying things they do no mean, and imploying words with bizaar sentiments to add to the commedy of the scence. A clear example of this is when Algernon meets Cecily. This scene is light hearted, romantic, and fun. But looking at the literal text makes this less clear, they joke about Algernon being Jack's "wicked" and "reckless" brother (CHECK THIS), both of which have negative connotations, which couldn't be further from the teasing nature of the scene itself. Another reason may have to do with the structure of scenes. "The Picture of Dorian Gray" primaryily follows one character and has one primary plot. "The Importance of Being Earnest" follows several characters with several unrelated plot points. So, there may be a serious scene that is followed by a more comic one, and the sums cancel eachother out to give a less clear direction of the story.
+
+# Character Characteristics
+
+Sentiment alanysis fit well to "The Picture of Dorian Gray", but the format of a play offers unique analysis opportunities. While "The Picutre of Dorian Gray" has dailouge from many characters, thoughts from characters, and observations from an omnipitent (CHECK THIS) narrator often mixed together, the play "The Importance of Being Earnest" has a fixed number of characters, with each line attributed to one. As a result, we can easily compare tendencies in dialouge beween characters.
+
+These graphics compare the vocabulary tendencies of Jack to Algernon and to Lady Bracknell. The y axis represents the proportion of time Jack used a given word, and on the x axis isthe proportion of time Algernon or Lady Bracknell use a word. The line y = x is overlayed on each graph, to represent when characters use a word an equal proportion of time. Each point represents a word used by the characters, and the points are overlayed with a selection of the words they represent (not all wrods could be included for the readabilty of the plot).
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+#Put play into a single string: 
+
 earnest_book <- str_flatten(earnest$text, " ")
 
-lines <- str_split_1(earnest_book, "(?=(JACK\\.|ALGERNON\\.|CHASUBLE\\.|MERRIMAN\\.|LANE\\.|LADY BRACKNELL\\.|GWENDOLEN\\.| GWENDOLEN\\.|MISS PRISM\\.))" )
+
+
+#Divide play into a series of strings, each with format "CHARACTER. What their line is"
+
+lines <- str_split_1(earnest_book, "(?=(JACK\\.|ALGERNON\\.|CHASUBLE\\.|MERRIMAN\\.|LANE\\.|LADY BRACKNELL\\.|GWENDOLEN\\.|CECILY\\.|MISS PRISM\\.))" ) 
+
+#str_split_1 splits the string at points of matches to regular expression
+#The ?= in front of the regular expression tells R to keep regular expression in final string pieces
+#Source for ?= info: https://stackoverflow.com/questions/74292177/split-a-string-and-keep-delimiter
+
+
+
+#Create a tibble
 
 name_line <- as_tibble(lines) |>
-  mutate(character = str_extract(value, "JACK\\.|ALGERNON\\.|CHASUBLE\\.|MERRIMAN\\.|LANE\\.|LADY BRACKNELL\\.|GWENDOLEN\\.| GWENDOLEN\\.|MISS PRISM\\."), 
-         line = str_remove(value, "JACK\\.|ALGERNON\\.|CHASUBLE\\.|MERRIMAN\\.|LANE\\.|LADY BRACKNELL\\.|GWENDOLEN\\.| GWENDOLEN\\.|MISS PRISM\\.")) |>
+  mutate(character = str_extract(value, "JACK\\.|ALGERNON\\.|CHASUBLE\\.|MERRIMAN\\.|LANE\\.|LADY BRACKNELL\\.|GWENDOLEN\\.|CECILY\\.|MISS PRISM\\."),                
+         #new column with name of character saying the line
+         line = str_remove(value, "JACK\\.|ALGERNON\\.|CHASUBLE\\.|MERRIMAN\\.|LANE\\.|LADY BRACKNELL\\.|GWENDOLEN\\.|CECILY\\.|MISS PRISM\\.")) |>
+          #remove the name of character saying line from the line
   select(character, line) |>
-  filter(!is.na(character))
+  filter(!is.na(character)) |>
+  mutate(line = str_remove_all(line, "\\[.+\\]")) |> #To get rid of stage directions
+  unnest_tokens(word, line) |>
+  count(word, character) |> 
+  group_by(character) |>
+  mutate(prop = n / sum(n)) |>
+  select(-n) |>
+  pivot_wider(names_from = character, values_from = prop) |>
+  select(word, `JACK.`, `ALGERNON.`, `LADY BRACKNELL.`) |>
+  pivot_longer(`ALGERNON.`:`LADY BRACKNELL.`, names_to = "character", values_to = "prop")
 
-
-#I dont think I need this but just in case: 
-
-#earnest |>
-#  filter(text == "JACK." | text == "ALGERNON." | text ==  "CHASUBLE." | text == "MERRIMAN." | text == "LANE." | #text == "LADY BRACKNELL" | text == "GWENDOLEN." | text == "GWENDOLEN." |text ==  "MISS PRISM.") |>
-#  group_by(text) |>
-#  summarize(count = n())
-
-#character_names_upper <- c("JACK.", "ALGERNON.", "CHASUBLE.", "MERRIMAN.", "LANE.", "LADY BRACKNELL", "GWENDOLEN.", "GWENDOLEN.", "MISS PRISM.")
-
-#earnest |>
-#  mutate(char_name = str_detect(text, "[A-Z]{4} ?[A-Z]*\\.+")) |>
-#  print(n=100)
 ```
-  
-Help with split: https://stackoverflow.com/questions/74292177/split-a-string-and-keep-delimiter 
-  
-  
-  
-  
-  
-Some Conclusion? ---------------------------------------------------------------
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+#Plot character word frequencies scatterplot
+
+
+name_line |>
+  anti_join(smart_stopwords) |>
+  ggplot(aes(x = prop, y = `JACK.`)) +
+  annotate("segment", x = 0, xend = 0.0065, y = 0, yend = .0065,
+  colour = "gray") +
+  geom_point(alpha = .7, position = position_jitter(), size = 2, color = "lightblue3") +
+  geom_text(aes(label = word), position = position_jitter(), check_overlap = T)+
+  labs(title = "Comparative Frequency of Jack and Algernon Word Use", 
+       x = "Frequency Algernon/Lady Bracknell Used Given Word", 
+       y = "Frequency Jack Used Given Word") +
+  theme_light() +
+  facet_wrap(vars(character))
+
+
+
+#This code inspired by our textbook, https://www.tidytextmining.com/tidytext
+
+
+```
+
+Jack and Algernon are approximately the same age and close friends, while Lady Bracknell is Algernon's aunt, and acts as a matriarch and pillar of standards of actions. Despite these differences, The distribution in the two graphs is very similar, with most words clustering around the y = x line, scattered outliers above the line repreesnting a variety of words used more often by Jack than Algernon or Lady Bracknell, and less wrods below the line.
+
+Some interesting points include the name "Ernest" being almost exactly the same amount by both Algernon and Jack. We can also see who the character are closest too, as Jack says his partners name Gwendolen more than Algernon or Lady Bracknell, and Algernon uses his partners name "Cecily" more often than Jack. We also can see Algernons obsession with Bunbury.
+
+# Conclusion
+
+Despite having the same author, it is not a super suprising result that there are major differences in the words used in "The Importance of Being Earnest" and "The Picture of Dorian Gray". One is a comedic play, the other a gothic novel, more surprising than their differences is their shared authorship. But it is suprising how well text analysis is able to pick out these differences. From overall word frequencies to the frequencies of theme related words to sentiments reflecting story arcs, to the more granular differences in each character, each graphic is able to help shine light on differences in theme, genre, and structure in a really unique way.
