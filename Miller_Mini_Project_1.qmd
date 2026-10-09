@@ -7,7 +7,7 @@ editor: visual
 editor_options: 
   chunk_output_type: console
 ---
-TESTTTTTTTTTTTTTTT
+
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
 #Loading in Packages: 
@@ -95,7 +95,7 @@ books_freq <- earnest_words_freq |>
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
 #Bar plots of top 15 words in each book with and without stop words
-
+#Text Analysis Method no. 1 Word counts/frequencies
 
 
 #Vector of lowercase character names
@@ -216,8 +216,11 @@ For this graph, I have focused on the themes of beauty and youth for "The Pictur
 "The Picture of Dorian Gray" is a fascinating character study, as we watch Dorian go from a relative newcomer on social scenes, rise to it with new experiences, slowly fall as Dorian becomes increasingly careless, and ultimately descend into a miserable life as he cuts out friends and faces consequences of past mistakes. We see this character charm the world, fall out of favor with it, and ultimately crumble after a challenging life. Each of these turns is described in beautiful prose, following all of Dorian's feelings of love, pleasure, guilt, and fear. As a result, sentiment analysis of each word in the novel provides an insightful mirror into the events of the novel itself. The following graphic was created by giving each word a sentiment value as assigned by the "Afinn" lexicon, where each word is rated on a scale from -5 to 5, with -5 being the most negative words and 5 being the most positive. The novel is then divided into sections of 80 lines each, and the sum of the Afinn value of each word is calculated. The annotations were made as I tried to independently think of the most important plot developments in the novel, and then went back into the text and left markers on the graph for their place.
 
 
-```{r, echo = FALSE, warning = FALSE, message = FALSE}
+```{r, echo = FALSE, warning = FALSE, message = FALSE, fig.alt = "This graph is an annotated bar chart overlaid with a smoothing line. The x axis represents the sections of the novel, with each section being 80 lines long, and the y axis represents the sum of the sections' afinn value. The x axis ranges from section 0 to section 110, and the y axis ranges from negative 60 to positive 80. The chart also features vertical lines labeled with plot points, including points where Dorian offers his soul in section 11, Dorian gets engaged in section 28, Dorian breaks his engagement and sees his portrait change in section 42, Dorian kills Basil in section 71, and Dorian dies in section 105. We see an increase in the sum of affin sentiment up until Dorian is engaged, and then the sentiment starts to decrease, hitting 0 after Dorian's portrait changes. We see a decline when Dorian kills Basil, and then a leveling off into the end of the novel. In general, we see an expected association between plot points and their sentiment value, for example, after Dorian gets engaged, there is a period of very positive afinn sums, but after Dorian kills Basil, there is a stretch of negative afinn sums."}
 #Show sentiment change over course of story with plot point annotations
+#Text Analysis Method no. 2 Afinn Sentiment Analysis
+#Alt text included in this graph
+
 
 dorian_words |>
   inner_join(afinn) |>
@@ -287,6 +290,8 @@ Sentiment analysis fits well with "The Picture of Dorian Gray", but the format o
 These graphics compare the vocabulary tendencies of Jack to Algernon and to Lady Bracknell. The y-axis represents the proportion of time Jack used a given word, and on the x-axis is the proportion of time Algernon or Lady Bracknell use a word. The line y = x is overlaid on each graph to represent when characters use a word an equal proportion of time. Each point represents a word used by the characters, and the points are overlaid with a selection of the words they represent (not all words could be included for the readability of the plot).
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
+#Some data tidying to get each word assinged to the character that speaks it: 
+
 #Put play into a single string: 
 
 earnest_book <- str_flatten(earnest$text, " ") #str_function no. 2
@@ -331,7 +336,6 @@ name_line <- as_tibble(lines) |>
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
 #Plot character word frequencies scatterplot
-
 
 name_line |>
   anti_join(smart_stopwords) |>
