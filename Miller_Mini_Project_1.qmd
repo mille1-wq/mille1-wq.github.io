@@ -84,7 +84,7 @@ books_freq <- earnest_words_freq |>
   full_join(dorian_words_freq) |>
   select( -num_word_earnest, -num_word_dorian) |>
   pivot_longer(cols = c(freq_word_earnest, freq_word_dorian), names_to = "book", values_to = "freq") |>
-  mutate(book = str_remove(book, "freq_word_"), 
+  mutate(book = str_remove(book, "freq_word_"), #str_function no. 1
          book = ifelse(book == "dorian", "The Picture of Dorian Gray", 
                        "The Importance of Being Earnest"))
 
@@ -287,13 +287,13 @@ These graphics compare the vocabulary tendencies of Jack to Algernon and to Lady
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
 #Put play into a single string: 
 
-earnest_book <- str_flatten(earnest$text, " ")
+earnest_book <- str_flatten(earnest$text, " ") #str_function no. 2
 
 
 
 #Divide play into a series of strings, each with format "CHARACTER. What their line is"
 
-lines <- str_split_1(earnest_book, "(?=(JACK\\.|ALGERNON\\.|CHASUBLE\\.|MERRIMAN\\.|LANE\\.|LADY BRACKNELL\\.|GWENDOLEN\\.|CECILY\\.|MISS PRISM\\.))" ) 
+lines <- str_split_1(earnest_book, "(?=(JACK\\.|ALGERNON\\.|CHASUBLE\\.|MERRIMAN\\.|LANE\\.|LADY BRACKNELL\\.|GWENDOLEN\\.|CECILY\\.|MISS PRISM\\.))" ) #str_function no. 3
 
 #str_split_1 splits the string at points of matches to regular expression
 #The ?= in front of the regular expression tells R to keep regular expression in final string pieces
@@ -306,7 +306,8 @@ lines <- str_split_1(earnest_book, "(?=(JACK\\.|ALGERNON\\.|CHASUBLE\\.|MERRIMAN
 name_line <- as_tibble(lines) |>
   mutate(character = str_extract(value, "JACK\\.|ALGERNON\\.|CHASUBLE\\.|MERRIMAN\\.|LANE\\.|LADY BRACKNELL\\.|GWENDOLEN\\.|CECILY\\.|MISS PRISM\\."),                
          #new column with name of character saying the line
-         line = str_remove(value, "JACK\\.|ALGERNON\\.|CHASUBLE\\.|MERRIMAN\\.|LANE\\.|LADY BRACKNELL\\.|GWENDOLEN\\.|CECILY\\.|MISS PRISM\\.")) |>
+         #str_function no. 4
+         line = str_remove(value, "JACK\\.|ALGERNON\\.|CHASUBLE\\.|MERRIMAN\\.|LANE\\.|LADY BRACKNELL\\.|GWENDOLEN\\.|CECILY\\.|MISS PRISM\\.")) |> 
           #remove the name of character saying line from the line
   select(character, line) |>
   filter(!is.na(character)) |>
