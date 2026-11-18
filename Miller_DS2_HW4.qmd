@@ -1,0 +1,333 @@
+---
+title: "Miller_DS2_HW4"
+format: pdf
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, message = F, warning = F, echo = F}
+library(tidyverse)
+library(rvest)
+library(polite)
+library(janitor)
+library(stringr)
+library(httr2)
+library(httr)
+library(tidycensus)
+
+#Loading keys
+ombd_api_key <- "39abdeff"
+census_api_key <- "13f229fe02f0add13b58b8fc3d227a95c7fb4f54"
+
+
+```
+
+
+
+
+## 11_apis On Your Own Questions: 
+
+1. Build a data set for a collection of movies by completing the **FILL IN** sections in the code below:
+
+```{r}
+# Create a vector of 5 movie names you want to study
+#  - must figure out pattern in URL for obtaining different movies
+movies <- c("halloween", 
+            "knives+out", 
+            "the+great+pumpkin", 
+            "nightmare+before+christmas", 
+            "hocus+pocus")
+
+# Set up empty tibble
+omdb <- tibble(
+  Title = character(), 
+  Rated = character(), 
+  Genre = character(),
+  Actors = character(), 
+  Metascore = double(), 
+  imdbRating = double(),
+  BoxOffice = double()
+)
+
+
+# Use for loop to run through API request process 5 times,
+#   each time filling the next row in the tibble
+#  - can do max of 1000 GETs per day
+for(i in 1:5) {
+  url <- str_c("http://www.omdbapi.com/?t=", movies[i], "&apikey=",  ombd_api_key)
+  Sys.sleep(0.5)
+  onemovie <- GET(url)
+  details <- content(onemovie, "parse")
+  omdb[i,1] <- details$Title
+  omdb[i,2] <- details$Rated  # rating
+  omdb[i,3] <- details$Genre  # genres (single string - could be more than one)
+  omdb[i,4] <- details$Actors  # actors (single string - could be more than one)
+  omdb[i,5] <- as.numeric(details$Metascore)  # metascore (be sure it is numeric)
+  omdb[i,6] <- as.numeric(details$imdbRating) # imdb rating (be sure it is numeric)
+  omdb[i,7] <- parse_number(details$BoxOffice) # box office (be sure it is numeric)
+}
+
+omdb
+
+#  could use stringr functions to further organize this data - separate 
+#    different genres, different actors, etc.  But don't need to now.
+```
+
+
+2. *(Included to have the function referenced in part 3)* Adapt the code in `hennepin_tidycensus` to write a function called `MN_tract_data` to give the user choices about year, county, and variables to pull off.  Show that `MN_tract_data(year = 2021, county = "Hennepin", variables = c("B01003_001", "B19013_001"))` works as expected.  Make sure it also works for other years, counties, and variables (e.g. B25077_001 is median home price and B02001_002 is number of white residents).
+
+
+```{r}
+MN_tract_data <- function(year, county, variables, key){
+  tidycensus::get_acs(
+    year = {{year}},
+    state = "MN",
+    geography = "tract",
+    variables = {{variables}},
+    output = "wide",
+    geometry = TRUE,
+    county = {{county}},   # specify county in call
+    show_call = TRUE, 
+    key = key # see resulting query
+)
+}
+
+#MN_tract_data(year = 2021, 
+              #county = "Hennepin", 
+              #variables = c("B01003_001", "B19013_001"), 
+              #key = census_api_key)
+
+```
+
+
+
+3. Use your function from (2) along with `map` and `list_rbind` to build a data set for Rice county for the years 2019-2021.  Use your scraped data to plot trends in income over time and population over time.
+
+```{r}
+df <- map(2019:2021, 
+          MN_tract_data, 
+          county = "Rice", 
+          variables = c("B01003_001", "B19013_001"), 
+          key = census_api_key) |>
+  list_rbind(names_to = "year") |>
+  mutate(year = year + 2018) |>
+  rename(median_income = B19013_001E,
+         population = B01003_001E)
+
+#Data set for Rice county from 2019 to 2021: 
+df
+
+#Plot Median Income over Time
+df |>
+  ggplot(aes(x = year, y = median_income)) +
+  geom_point() +
+  geom_smooth(se = F) +
+  labs(title = "Median Income over Time")
+
+#Plot Population over Time
+df |>
+  ggplot(aes(x = year, y = population)) +
+  geom_point() +
+  geom_smooth(se = F) +
+  labs(title = "Population over Time")
+```
+
+
+## 09_table_scrapping On Your Own Question: 
+Note: Describe each line of code, answer in 12_maps
+
+2. In 12_maps.qmd we will see how to create an interactive U.S. map showing population densities by state.  Right now, let's see if we can use our new web scraping skills to scrape the correct population density data and create a tidy data frame!
+
+A quick wikipedia search yields [this webpage](https://en.wikipedia.org/wiki/List_of_states_and_territories_of_the_United_States_by_population_density) with population densities in a nice table format.  Use our 4 steps to `rvest`ing data to acquire the data, and then create a tidy tibble with one row per state.
+
+
+```{r}
+url <- "https://en.wikipedia.org/wiki/List_of_states_and_territories_of_the_United_States_by_population_density"
+
+session <- bow(url, force = TRUE)
+  #bowing to url to start session
+
+result <- scrape(session) |>
+  html_nodes(css = "table") |>  
+      #Getting all tables in the url
+  html_table(header = TRUE, fill = TRUE) 
+      #Tells R the first row is the header 
+        #and to automatically fill in empty cells with NAs
+
+density_table <- result[[1]] 
+      #Select the first table in the url
+
+#Data tidying: 
+density_data <- density_table |>
+  select(1, 2, 4, 5) |>
+      #Select Location, Density (mi^2), population, and Land Area (mi^2) columns
+  filter(!row_number() == 1) |>
+      #Get rid of first row with units
+  rename(Land_area = `Land area`) |>
+      #Give better formatted name
+  mutate(state_name = str_to_lower(as.character(Location)),
+      #Create new charcter variable, state_name, with in states lowercase
+         Density = parse_number(Density),
+      #Get rid of commas, extra characters in Density
+         Population = parse_number(Population),
+      #Get rid of commas, extra characters in Population
+         Land_area = parse_number(Land_area)) |>
+      #Get rid of commas, extra characters in Land_area
+  select(-Location)
+      #Remove Location column
+
+density_data
+```
+
+
+## 10_web_scraping On Your Own Questions: 
+
+2. Go to https://www.bestplaces.net and search for Minneapolis, Minnesota.  This is a site some people use when comparing cities they might consider working in and/or moving to.  Using SelectorGadget, extract the following pieces of information from the Minneapolis page:
+
+- property crime (on a scale from 0 to 100)
+- minimum income required for a single person to live comfortably
+- average monthly rent for a 2-bedroom apartment
+- the "about" paragraph (the very first paragraph above "Location Details")
+
+and "clean up" each of these elements - i.e. numbers should be <dbl> and free of extras, strings should be <chr>, etc.
+
+You might have to use `read_html_live()` rather than `read_html()`.  It appears the html source code is not static, but the pages at this website gets built out with JavaScript.  `read_html()` should always be used first, but if it fails, then `read_html_live()` can sometimes work, even though it's slower and requires installation of Chrome.
+
+
+```{r}
+#Setting up session
+session <- bow(
+  "https://bestplaces.net/city/minnesota/minneapolis", force = TRUE
+)
+url <- "https://bestplaces.net/city/minnesota/minneapolis"
+url <- read_html_live(url)
+
+
+#creating tibble
+minneapolis <- tibble(
+  crime = character(), 
+  min_income_single = character(), 
+  rent_2br = character(),
+  about = character()
+)
+
+
+#Putting in variables:
+#crime
+minneapolis[1, 1] <- url |>
+  html_nodes(".col-4 > div:nth-child(1)") |>
+  html_text()
+
+#min_income_single
+minneapolis[1, 2] <- url |>
+  html_nodes(".text-center+ .text-center div:nth-child(1)") |>
+  html_text()
+
+
+#rent_2br
+minneapolis[1, 3] <- url |>
+  html_nodes(".col-3~ .col-3+ .col-3 .mb-2") |>
+  html_text()
+
+#about
+minneapolis[1, 4] <- url |>
+  html_nodes(".card-img-top+ .ms-3") |>
+  html_text()
+
+#Data tidying: 
+minneapolis <- minneapolis |>
+  mutate(crime = str_remove(crime, " / 100"), 
+         min_income_single = parse_number(min_income_single),
+         rent_2br = parse_number(rent_2br))
+
+#Info aout Minneapolis: 
+minneapolis
+
+```
+
+
+3. Write a function called `scrape_bestplaces()` with arguments for `state` and `city`.  When you run, for example, `scrape_bestplaces("minnesota", "minneapolis")`, the output should be a 1 x 6 tibble with columns for `state`, `city`, `crime`, `min_income_single`, `rent_2br`, and `about`.
+
+
+```{r}
+scrape_bestplaces <- function(state, city){
+  
+#Setting up session
+url <- str_c("https://bestplaces.net/city/", state, "/", city)
+  
+session <- bow(
+  url, force = TRUE
+)
+
+url <- read_html_live(url)
+
+
+#creating tibble
+df <- tibble(
+  crime = character(), 
+  min_income_single = character(), 
+  rent_2br = character(),
+  about = character()
+)
+
+
+#Putting in variables:
+#crime
+df[1, 1] <- url |>
+  html_nodes(".col-4 > div:nth-child(1)") |>
+  html_text()
+
+#min_income_single
+df[1, 2] <- url |>
+  html_nodes(".text-center+ .text-center div:nth-child(1)") |>
+  html_text()
+
+
+#rent_2br
+df[1, 3] <- url |>
+  html_nodes(".col-3~ .col-3+ .col-3 .mb-2") |>
+  html_text()
+
+#about
+df[1, 4] <- url |>
+  html_nodes(".card-img-top+ .ms-3") |>
+  html_text()
+
+#Data tidying: 
+df |>
+  mutate(state = state, 
+         city = city,
+         crime = str_remove(crime, " / 100"), 
+         min_income_single = parse_number(min_income_single),
+         rent_2br = parse_number(rent_2br))
+}
+
+#Testing function: 
+scrape_bestplaces("minnesota", "minneapolis")
+scrape_bestplaces("wisconsin", "eau_claire")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

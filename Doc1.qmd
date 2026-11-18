@@ -1,0 +1,125 @@
+---
+title: "Copy the Pros 3"
+output:
+  pdf_document: default
+  html_document: default
+subtitle: "SDS 250: Data Visualization"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+install.packages("geofacet")
+library(geofacet)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+## The graphic
+
+Many of the creative, crisp visualizations that you see in news articles, twitter posts, and reddit threads can be broken down and recreated to exact (or close to) precision. Let's take a look at a [COVID article from the NYTimes](https://www.nytimes.com/interactive/2021/04/06/us/variants-cases-spread.html). Specifically, about two-thirds of the way down the page there is a graphic titled **After months of progress, cases have risen again in most states.**. Break down the aspects of this graphic. What are the:
+
+- Geometries
+
+- Aesthetics
+
+- Scales
+
+- Modifiers
+
+What do you like about this graphic? What could be improved upon?
+
+
+![](https://mdl.stolaf.edu/pluginfile.php/733113/mod_label/intro/nytimes_covid_map.png)
+
+
+## The data
+
+First the COVID data, thankfully the NY Times shares their data through their GitHub account and we can read it in directly. I've joined this data with some 2019 population data from the census (closest year we have to 2021). You can download and use the `nyt_covid.csv` file posted on Moodle to recreate the visualization.
+
+```{r, eval = FALSE}
+library(geofacet)
+library(zoo)
+library(tidyverse)
+
+nyt_covid <- read_csv("C:/Users/Lydia/Desktop/Junior Year/DataVis/nyt_covid.csv")
+
+
+
+```
+
+## Time to plot
+
+Alright, we need a few things for our plot:
+
+- Line for cases per 100,000
+- area under the curve after minimum cases reported
+- faceted by state in a map arrangement (done with `geofacet` package)
+- all titles and labels
+- correct colors
+- correct background properties
+
+#### Start with one state, Minnesota
+
+Create the line graph for daily cases per 100,000 residents. Be sure to look at the dataset and find the correct variables to use.
+
+```{r}
+nyt_covid |> 
+  mutate(shaded = ifelse(date >= min_date, "yes", "no")) |>
+  ggplot(aes(x = date, y = case_per_100)) +
+    geom_line(color = "#ae1c0c") +
+  theme_minimal() +
+  geom_area(aes(alpha = shaded), fill = "#ae1c0c") +
+  facet_geo( ~ state_abb ) +
+  scale_alpha_discrete(range = c(0, .5)) +
+  labs(x = NULL, 
+       y = NULL, 
+       title  = "Cases per 100,000")+
+  theme(axis.ticks = element_blank(), 
+        axis.text = element_blank(), 
+        panel.grid.minor = element_blank(), 
+        panel.grid.major.x = element_blank(), 
+        legend.position = "none")
+```
+
+Remove x and y-axis labels, clean up the grid lines and background to match the original plot.
+Hint: Google how to remove things and use a built-in theme_XX() function.
+
+```{r}
+
+```
+
+Now let's add the shaded area, based on the time after the date with the lowest cases. In order to do this, we'll need to create an indicator variable for dates after the minimum cases. Can you also hide the legend?
+
+```{r}
+nyt_covid |> 
+  filter(state == __________) |> 
+  mutate(shaded = ifelse(_______ >= ________, "yes", "no")) |> 
+  ggplot(aes(x = _______, y = ________)) +
+    geom_XXXXX() +
+    geom_XXXXX(aes(alpha = _____)) +  # geom for shading area, alpha is usually a numeric value but not here...
+  theme_XXXXXXXX() +
+  labs() +
+  theme()
+```
+
+Now you should have a version pretty close to an individual state in the original NYT article. Next we use the `geofacet` package to create a special facet grid organized by US state position. The function from the package is called `facet_geo()`, how could you use it?
+
+
+```{r}
+
+```
+
+
+
+## Post production
+
+Is there anything else that we can do to improve the image and make it look more like the original? Does everything need to be done in R? Sometimes little tweaks in ggplot can be more trouble than they are worth. In those cases, it is sometimes helpful to use an editing software like Adobe Publisher or [Inkscape](https://inkscape.org/) (free). In these programs you can edit, annotate, resize, scale, etc. Just BEWARE:
+
+- It is hard to exactly match fonts, styles, colors in a "post-production". You can easily ruin the continuity of the graphic.
+- You cannot easily update post processed images for new or corrected data. Imagine doing a bunch of work to make the original plot fancy and then learn about the Missouri outlier. It's easy to filter and recreate the ggplot, but we would have to redo all of the work in post processing again.
+
+
+
+
+
+

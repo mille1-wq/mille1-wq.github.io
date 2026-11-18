@@ -265,7 +265,8 @@ temp <- vaccine_data |>
 ```  
 
 a) Describe the tibble `temp` created above.  What would be the dimensions?  What do rows and columns represent?
-Expect 3 rows frm group by, and 3 columns of data and a column for the group names for 4 columns total. 
+
+Expect 3 rows from group by, and 3 columns of data and a column for the group names for 4 columns total. 
 
 b) What would happen if we replaced `new_perc_vac = ifelse(perc_complete_vac > 95, NA, perc_complete_vac)` with `new_perc_vac = ifelse(perc_complete_vac > 95, perc_complete_vac, NA)`?
 
@@ -298,11 +299,13 @@ vaccine_data |>
 ```
 
 a) Why would the first plot produce an error?
+geom_smooth doesn't have enough information to make a line, the mapping is only in geom_point and not ggplot. 
 
 b) Describe the tibble `temp` created above.  What would be the dimensions?  What do rows and columns represent?
+3 rows (from the slice head), and 2 columns (variable names, var1)
 
 c) What would happen if we replaced `fct_reorder(HR_party, perc_over_65, .fun = median)` with `HR_party`?
-
+The order of the boxplots would potentially change from ordering by median to ordering alphabetically. 
 
 10. Hypothetical R chunk #3:
 
