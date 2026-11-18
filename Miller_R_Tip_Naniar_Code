@@ -1,0 +1,166 @@
+---
+title: "R Tip of the Day: Naniar"
+subtitle: "Work with Missing Data"
+format:
+  revealjs: 
+    slide-number: true
+    chalkboard: 
+      buttons: true
+    preview-links: auto
+editor: visual
+editor_options: 
+  chunk_output_type: console
+echo: TRUE
+---
+
+```{r, echo=F}
+library(naniar)
+library(tidyverse)
+library(NHANES)
+library(ggplot2)
+
+nhanes <- NHANES
+```
+
+## Find missing values
+
+::: incremental
+- **n_miss** counts number of missing rows in a variable
+- **pct_miss** calculates what percent of rows are missing
+:::
+
+## Find missing values
+
+```{r}
+nhanes |>
+  summarize(totchol_miss = n_miss(TotChol),
+            totchol_pect_miss = pct_miss(TotChol))
+```
+
+## Create Tables for Missingness
+
+::: incremental
+- **miss_var_summary** gives the number and percent missing in each variable, orders by most missing
+:::
+
+## Create Tables for Missingness
+
+``` {.r code-line-numbers="3"}
+nhanes|>
+  select(Age, TotChol, Pulse) |>
+  miss_var_summary() 
+```
+
+## Create Tables for Missingness
+
+```{r}
+nhanes|>
+  select(Age, TotChol, Pulse) |>
+  miss_var_summary() 
+```
+
+## Visualize Missing Data
+
+::: incremental
+- **geom_miss_point** creates a scatterplot that plots missing data on x/y axes.
+- **gg_miss_var** plots the number of missing points in each variable
+:::
+
+## Visualize Missing Data
+
+```{r, warning = T}
+nhanes |>
+  ggplot(aes(x = Pulse, y = TotChol)) +
+  geom_point()
+```
+
+## Visualize Missing Data: geom_miss_point
+
+``` {.r code-line-numbers="3"}
+nhanes |>
+  ggplot(aes(x = Pulse, y = TotChol)) +
+  geom_miss_point()
+```
+
+## Visualize Missing Data: geom_miss_point
+
+```{r}
+nhanes |>
+  ggplot(aes(x = Pulse, y = TotChol)) +
+  geom_miss_point()
+```
+
+## Visualize Missing Data: geom_miss_point with color
+
+``` {.r code-line-numbers="2"}
+nhanes |>
+  ggplot(aes(x = Pulse, y = TotChol, color = SleepHrsNight)) +
+  geom_miss_point(size = 2, alpha = .4) +
+  scale_colour_viridis_c()
+```
+
+## Visualize Missing Data: geom_miss_point with color
+
+```{r}
+nhanes |>
+  ggplot(aes(x = Pulse, y = TotChol, color = SleepHrsNight)) +
+  geom_miss_point(size = 2, alpha = .4) +
+  scale_colour_viridis_c()
+```
+
+## Visualize Missing Data: geom_miss_point with ggplot
+
+```{r, warning = T, eval = F}
+nhanes |>
+  ggplot(aes(x = Pulse, y = TotChol)) +
+  geom_miss_point() +
+  facet_wrap(~HealthGen) +
+  labs(title = "Total Cholestrol over Pulse by General Health", 
+       y = "Total Chelesterol (mmol/L)", 
+       x = "Pulse (bbm)", 
+       color = "Missing")+
+  geom_smooth(method = "lm", se = F) +
+  theme_light()
+```
+
+## Visualize Missing Data: geom_miss_point with ggplot
+
+```{r, warning = T, echo = F}
+nhanes |>
+  ggplot(aes(x = Pulse, y = TotChol)) +
+  geom_miss_point() +
+  facet_wrap(~HealthGen) +
+  labs(title = "Total Cholestrol over Pulse by General Health", 
+       y = "Total Chelesterol (mmol/L)", 
+       x = "Pulse (bbm)", 
+       color = "Missing")+
+  geom_smooth(method = "lm", se = F) +
+  theme_light()
+```
+
+## Visualize Missing Data: gg_miss_var
+
+``` {.r code-line-numbers="3"}
+nhanes|>
+  select(Sex, SexOrientation, Age, Education, HHIncome, Poverty, HomeRooms, HomeOwn, Work, Weight, Height, Pulse, DirectChol, TotChol, Diabetes, Depressed, nPregnancies, SleepHrsNight, PhysActive, AlcoholDay, SmokeNow) |>
+gg_miss_var()
+```
+
+## Visualize Missing Data: gg_miss_var
+
+```{r}
+nhanes|>
+  select(Sex, SexOrientation, Age, Education, HHIncome, Poverty, HomeRooms, HomeOwn, Work, Weight, Height, Pulse, DirectChol, TotChol, Diabetes, Depressed, nPregnancies, SleepHrsNight, PhysActive, AlcoholDay, SmokeNow) |>
+gg_miss_var()
+
+```
+
+## 
+
+::: {style="margin-top: 200px; font-size: 2.5em;"}
+Thank you!
+:::
+
+::: {style="margin-top: 200px; font-size: 1.5em;"}
+Questions?
+:::
